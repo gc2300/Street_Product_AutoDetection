@@ -17,6 +17,4 @@ __Project Schedule__
 
 ![Gantt chart](graphics/mhealth_gantt_2.jpg)
 
-__Website__
 
-https://cuspcapstones.github.io/Automated-detection-of-street-level-product-displays_2018/
