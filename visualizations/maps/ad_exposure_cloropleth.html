@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>NYC Tobacco Ad Exposure</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.46.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v0.46.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+	    body {
+	      margin: 0;
+	      padding: 0;
+	    }
+
+	    h2,
+	    h3 {
+	      margin: 10px;
+	      font-size: 1.2em;
+	    }
+
+	    h3 {
+	      font-size: 1em;
+	    }
+
+	    p {
+	      font-size: 0.85em;
+	      margin: 10px;
+	      text-align: left;
+	    }
+
+	    /**
+	    * Create a position for the map
+	    * on the page */
+	    #map {
+	      position: absolute;
+	      top: 0;
+	      bottom: 0;
+	      width: 100%;
+	    }
+
+	    /**
+	    * Set rules for how the map overlays
+	    * (info box and legend) will be displayed
+	    * on the page. */
+	    .map-overlay {
+	      position: absolute;
+	      bottom: 0;
+	      right: 0;
+	      background: rgba(255, 255, 255, 0.8);
+	      margin-right: 20px;
+	      font-family: Arial, sans-serif;
+	      overflow: auto;
+	      border-radius: 3px;
+	    }
+
+	    #features {
+	      top: 0;
+	      height: 100px;
+	      margin-top: 20px;
+	      width: 250px;
+	    }
+
+	    #legend {
+	      padding: 10px;
+	      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+	      line-height: 18px;
+	      height: 90px;
+	      margin-bottom: 40px;
+	      width: 100px;
+	    }
+
+	    .legend-key {
+	      display: inline-block;
+	      border-radius: 20%;
+	      width: 10px;
+	      height: 10px;
+	      margin-right: 5px;
+	    }
+    </style>
+</head>
+<body>
+	<div id='map'></div>
+	<div class='map-overlay' id='features'><h2>NYC Point-of-sale Tobacco Ad Exposure</h2><div id='pd'><p>Hover over a Census block group</p></div></div>
+	<div class='map-overlay' id='legend'></div>
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiY21vZmYiLCJhIjoiY2ppcXNsdmwwMHoxdTNxcGVwbGc0OWJsMiJ9.6UETcF4ksVHa7IcPNLmMgA';
+        var map = new mapboxgl.Map({
+            container: 'map',
+            // Add custom style
+            style: 'mapbox://styles/cmoff/cjk2og1i60r7b2rpkgq2cug9j',
+            center: [-73.912,40.705],
+            zoom: 11.4,
+            minZoom: 9,
+            maxZoom: 18,
+            hash: false
+        });
+
+        map.on('load', function() {
+
+        	// Add default pointer cursor
+        	map.getCanvas().style.cursor = 'default';
+
+	        // Create arrays of intervals and colors
+	        var layers = ['0-0.46', '0.46-1.23', '1.23-2.15', '2.15-3.22', '3.22-4.75'];
+	        var colors = ['#feefd7', '#fdcc8a', '#fc8d59', '#e34c35', '#b30000'];
+
+	        // Iterate through above arrays to create a legend
+	        for (i = 0; i < layers.length; i++) {
+	          var layer = layers[i];
+	          var color = colors[i];
+	          var item = document.createElement('div');
+	          var key = document.createElement('span');
+	          key.className = 'legend-key';
+	          key.style.backgroundColor = color;
+
+	          var value = document.createElement('span');
+	          value.innerHTML = layer;
+	          item.appendChild(key);
+	          item.appendChild(value);
+	          legend.appendChild(item);
+	        }
+
+	        // Add an info window
+	        map.on('mousemove', function(e) {
+	            var states = map.queryRenderedFeatures(e.point, {
+	            	layers: ['ad_scored_cbg']
+	        	});
+
+		        if (states.length > 0) {
+		          document.getElementById('pd').innerHTML = '</strong></h3><p><strong><em>' + states[0].properties.Score2 + '</strong> weighted POST ads</em></p>';
+		        } else {
+		          document.getElementById('pd').innerHTML = '<p>Hover over a Census block group</p>';
+		        }
+		    });
+
+		    var nav = new mapboxgl.NavigationControl();
+		    map.addControl(nav, 'top-left');
+        });
+    </script>
+</body>
+</html>

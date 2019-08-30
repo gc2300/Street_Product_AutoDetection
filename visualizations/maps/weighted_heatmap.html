@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Weighted Tobacco Vendors</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.45.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.45.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+      body { 
+        margin:0; 
+        padding:0; 
+        font-family: sans-serif; 
+        font-size: 14px; 
+      }
+      #map { position:absolute; top:0; bottom:0; width:100%; }
+      li {
+        padding: 3px 0;
+      }
+      h1 {
+        font-size: 20px;
+        line-height: 30px;
+      }
+      h2 {
+        font-size: 14px;
+        line-height: 20px;
+        margin-bottom: 10px;
+      }
+      h3 {
+        margin: 10px;
+        font-size: 1.2em;
+      }
+      p {
+        font-size: 0.85em;
+        line-height: 20px;
+        margin-bottom: 10px;
+      }
+
+      /**
+      * Create a position for the map
+      * on the page */
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+
+      /**
+      * Set rules for how the map overlays
+      * (info box and legend) will be displayed
+      * on the page. */
+      .map-overlay {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.8);
+        margin-right: 20px;
+        font-family: Arial, sans-serif;
+        overflow: auto;
+        border-radius: 3px;
+      }
+      #features {
+        top: 0;
+        height: 100px;
+        margin-top: 20px;
+        width: 250px;
+      }
+      h4 {
+        text-transform: uppercase;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        margin: 0;
+        padding: 16px;
+      }
+      ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 16px;
+      }
+      ul span {
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        margin-right: 8px;
+        border-radius: 50%;
+      }
+      dd {
+        margin-left: 0;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+      .session {
+        margin-bottom: 20px;
+      }
+
+      .row {
+        height: 12px;
+        width: 100%;
+      }
+
+      .colors {
+        background: linear-gradient(to right, rgba(33,102,172,0), #ffffb2, 
+        #fecc5c, #fd8d3c, #f03b20, #bd0026);
+        margin-bottom: 5px;
+      }
+
+      .label {
+        width: 15%;
+        display: inline-block;
+        text-align: center;
+      }
+
+      a {
+        text-decoration: none;
+        color: #2dc4b2;
+      }
+
+      #console {
+        position: absolute;
+        width: 270px;
+        margin: 10px;
+        padding: 20px 20px;
+        background-color: white;
+      }
+    </style>
+</head>
+<body>
+
+    <div id='map'></div>
+    <div id='console'>
+      <h1>Retailer Density</h1>
+      <p>Data: <a href='https://health.data.ny.gov/Health/Active-Retail-Tobacco-Vendors/9ma3-vsuk'>Active Retail Tobacco Vendors
+    </a> in NYC 2017</p>
+      <div class='session'>
+        <h2>Number of vendors</h2>
+        <div class='row colors'></div>
+        <div class='row labels'>
+          <div class='label'>0</div>
+          <div class='label'>1</div>
+          <div class='label'>2</div>
+          <div class='label'>3</div>
+          <div class='label'>4</div>
+          <div class='label'>5+</div> 
+        </div>
+      </div>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiY21vZmYiLCJhIjoiY2ppcXNsdmwwMHoxdTNxcGVwbGc0OWJsMiJ9.6UETcF4ksVHa7IcPNLmMgA';
+        var map = new mapboxgl.Map({
+            container: 'map',
+            // Add Dark Style
+            style: 'mapbox://styles/cmoff/cjivrb2ch4x1h2snx2mu2s5ry',
+            center: [-73.900,40.705],
+            zoom: 9.5,
+            minZoom: 9,
+            maxZoom: 18,
+            hash: false
+        });
+
+        map.on('load', function() {
+            // Adding geojson point source.
+            map.addSource("weighted_retailers", {
+                type: "geojson",
+                // Point to GeoJSON data served directly from GitHub using RawGit.
+                data: "https://rawgit.com/charlie-moffett/15436b1f00c6073a56232c2807a3d80b/raw/069039eba98df5a2ae982a7f9d22a9ca1cb0642d/weighted_retailers.geojson"
+            });
+
+            map.addLayer({
+                id: "weighted_retailers",
+                source: "weighted_retailers",
+                type: "heatmap",
+                maxzoom: 15,
+                paint: {
+                    "heatmap-weight": {
+                      property: 'retail_buffer__mean',
+                      type: 'exponential',
+                      stops: [
+                        [1, 0],
+                        [3350, 1]
+                      ]
+                    },
+                    // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+                    // Begin color ramp at 0-stop with a 0-transparancy color
+                    // to create a blur-like effect.
+                    "heatmap-color": [
+                        "interpolate",
+                        ["linear"],
+                        ["heatmap-density"],
+                        0, "rgba(33,102,172,0)",
+                        0.2, "#ffffb2",
+                        0.4, "#fecc5c",
+                        0.6, "#fd8d3c",
+                        0.8, "#f03b20",
+                        1, "#bd0026"
+                    ],
+                    // Adjust the heatmap radius by zoom level
+                    "heatmap-radius": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        9.5, 5,
+                        12, 10
+                    ],
+                    // increase intensity as zoom level increases
+                    'heatmap-intensity': {
+                      stops: [
+                        [9.5, 0.3],
+                        [11, 0.7]
+                      ]
+                    },
+                    // decrease opacity to transition into the circle layer
+                    'heatmap-opacity': {
+                      default: .7,
+                      stops: [
+                        [13, .7],
+                        [14, 0]
+                      ]
+                    }
+                }                   
+            }, 'waterway-label');
+
+            map.addLayer({
+                "id": "retailers-point",
+                "type": "circle",
+                "source": "NYC_Tobacco_Retailers_2018",
+                "minzoom": 13,
+                "paint": {
+                    "circle-radius": 3,
+                    "circle-color": "rgb(0,0,0)",
+                    "circle-stroke-color": "white",
+                    "circle-stroke-width": 1,
+                    // Transition from heatmap to circle layer by zoom level
+                    "circle-opacity": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        13, 0,
+                        14, 1
+                    ]
+                }
+            }, 'waterway-label');
+        });
+
+        map.on('mousemove', function(event) {
+          // console.log(event);
+          if (map.loaded()) {
+            var features = map.queryRenderedFeatures(event.point, {
+              layers: ['retailers-point']
+            });
+            map.getCanvas().style.cursor = features.length ? 'pointer' : '';
+          }
+          /*
+          if (features.length) {
+            map.getCanvas().style.cursor = 'pointer';
+          } else {
+            map.getCanvas().style.cursor = '';
+          }*/
+        });
+
+        var nav = new mapboxgl.NavigationControl();
+        map.addControl(nav, 'top-right');
+    </script>
+
+</body>
+</html>
